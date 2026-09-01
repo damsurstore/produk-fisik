@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAMSUR STORE</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    :root { --main-color: #0d6efd; --wa-color: #25d366; }
+    body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; padding-bottom: 90px;}
+    /* .header-box { background: linear-gradient(135deg, #0d6efd, #0b5ed7); color: white; padding: 25px 15px; text-align: center; */
+    .header-box{display:none; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .card-product { border: none; border-radius: 12px; transition: all 0.2s; background: white; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+    .card-product:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+    .product-img { height: 150px; object-fit: cover; width: 100%; background: #eee; }
+    .badge-promo { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; }
+    .price-promo { font-weight: bold; color: #dc3545; font-size: 1rem; }
+    .price-normal { text-decoration: line-through; color: #888; font-size: 0.8rem; margin-left: 4px; }
+    /* .btn-cart-float { position: fixed; bottom: 40px; right: 100px; z-index: 999; border-radius: 50px; padding: 12px 24px; box-shadow: 0 4px 15px rgba(37,211,102,0.4); background: var(--wa-color); color: white; font-weight: bold; border: none; } */
+
+/* .btn-cart-float { position: absolute; bottom: 0; right: 0; top:0; left:0; margin:auto; z-index: 999; border-radius: 50px; padding: 12px 24px; box-shadow: 0 4px 15px rgba(37,211,102,0.4); background: var(--wa-color); color: white; font-weight: bold; border: none; } */
+
+.btn-cart-float { position: fixed; bottom: 0; right: 0; top:0; left:0; margin:auto; border-radius: 50px; box-shadow: 0 4px 15px rgba(37,211,102,0.4); background: var(--wa-color); color: white; font-weight: bold; border: none; height:50px; width:200px}
+
+    .btn-cart-float:hover { background: #20ba5a; color: white; }
+
+    /* Section Produk Otomatis */
+    .feature-nav { display:flex; gap:8px; flex-wrap:wrap; margin-top:-8px; margin-bottom:20px; }
+    .feature-nav .btn { border-radius:999px; font-size:.85rem; font-weight:600; }
+    .feature-section { margin-bottom:30px; }
+    .feature-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .feature-title h5 { margin:0; font-weight:800; }
+    .feature-title small { color:#6c757d; }
+    .feature-section .row { margin-bottom:0; }
+    .section-empty { display:none; }
+    .sold-badge { position:absolute; top:10px; left:10px; background:#198754; color:#fff; padding:3px 8px; border-radius:6px; font-size:.7rem; font-weight:bold; }
+    .main-catalog-title { display:flex; align-items:center; justify-content:space-between; margin:4px 0 14px; }
+    .main-catalog-title h5 { margin:0; font-weight:800; }
+    /* Konten kartu produk dibuat rata tengah */
+    .card-product .product-info { text-align:center; }
+    .card-product .product-category,
+    .card-product .product-name,
+    .card-product .product-unit,
+    .card-product .product-price { text-align:center; }
+    .card-product .product-name { white-space:normal; line-height:1.25; min-height:2.5em; }
+    .card-product .product-price { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px; }
+    .infinite-loader { width:100%; text-align:center; padding:16px 0 4px; }
+    .infinite-sentinel { height:1px; width:100%; }
+    .load-more-status { font-size:.78rem; color:#6c757d; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Header Store -->
+  <div class="header-box">
+    <h3 class="fw-bold mb-1" id="store-title"><i class="bi bi-shop me-2"></i>DAMSUR STORE</h3>
+    <p class="small opacity-75 mb-0" id="store-motto">Toko Online Modern Berbasis Checkout Whatsapp</p>
+  </div>
+
+  <div class="container my-4">
+    <!-- Search & Filter -->
+    <div class="row g-2 mb-4">
+      <div class="col-8 col-md-9">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Cari produk..." onkeyup="filterProducts()">
+        </div>
+      </div>
+      <div class="col-4 col-md-3">
+        <select id="categorySelect" class="form-select" onchange="filterProducts()">
+          <option value="">Semua</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tombol navigasi fitur hanya aktif pada kondisi awal (search kosong + kategori Semua) -->
+    <div id="featureNav" class="feature-nav d-none">
+      <a href="#promoSection" class="btn btn-outline-danger"><i class="bi bi-tags-fill me-1"></i>Promo Hari Ini</a>
+      <a href="#featuredSection" class="btn btn-outline-warning"><i class="bi bi-star-fill me-1"></i>Produk Unggulan</a>
+      <a href="#bestSellerSection" class="btn btn-outline-success"><i class="bi bi-fire me-1"></i>Produk Terlaris</a>
+    </div>
+
+    <!-- Section rekomendasi: hanya tampil jika search kosong dan kategori = Semua -->
+    <div id="featureSections" class="d-none">
+      <section id="promoSection" class="feature-section d-none">
+        <div class="feature-title">
+          <h5><i class="bi bi-tags-fill text-danger me-2"></i>Promo Hari Ini</h5>
+          <small>Produk dengan harga promo</small>
+        </div>
+        <div class="row g-3" id="promoGrid"></div><div id="promoLoader" class="infinite-loader d-none"><div class="spinner-border spinner-border-sm text-danger" role="status"></div><div class="load-more-status mt-1">Memuat produk...</div></div><div id="promoSentinel" class="infinite-sentinel"></div>
+      </section>
+
+      <section id="featuredSection" class="feature-section d-none">
+        <div class="feature-title">
+          <h5><i class="bi bi-star-fill text-warning me-2"></i>Produk Unggulan</h5>
+          <small>Harga normal atau promo ≥ Rp100.000</small>
+        </div>
+        <div class="row g-3" id="featuredGrid"></div><div id="featuredLoader" class="infinite-loader d-none"><div class="spinner-border spinner-border-sm text-warning" role="status"></div><div class="load-more-status mt-1">Memuat produk...</div></div><div id="featuredSentinel" class="infinite-sentinel"></div>
+      </section>
+
+      <section id="bestSellerSection" class="feature-section d-none">
+        <div class="feature-title">
+          <h5><i class="bi bi-fire text-success me-2"></i>Produk Terlaris</h5>
+          <small>Berdasarkan jumlah unit yang pernah dipesan</small>
+        </div>
+        <div class="row g-3" id="bestSellerGrid"></div><div id="bestSellerLoader" class="infinite-loader d-none"><div class="spinner-border spinner-border-sm text-success" role="status"></div><div class="load-more-status mt-1">Memuat produk...</div></div><div id="bestSellerSentinel" class="infinite-sentinel"></div>
+      </section>
+    </div>
+
+    <!-- Spinner Loading -->
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-primary mb-2" role="status"></div>
+      <p class="text-muted small">Memuat katalog toko...</p>
+    </div>
+
+    <!-- Grid Produk -->
+    <div class="main-catalog-title">
+      <h5 id="mainCatalogTitle">Semua Produk</h5>
+      <small id="mainCatalogInfo" class="text-muted"></small>
+    </div>
+    <div class="row g-3" id="productGrid"></div>
+  </div>
+
+  <!-- Floating Cart Button -->
+  <button class="btn btn-cart-float" data-bs-toggle="modal" data-bs-target="#cartModal">
+    <i class="bi bi-cart-fill me-1"></i> Keranjang (<span id="cartCount">0</span>)
+  </button>
+
+  <!-- Modal Checkout -->
+  <div class="modal fade" id="cartModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-bag-check-fill me-2 text-success"></i>Keranjang Belanja</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="cartItemsList"></div>
+          
+          <hr class="my-4">
+          
+          <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>Formulir Data Pengiriman</h6>
+          <form id="checkoutForm">
+            <div class="row g-2">
+              <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Nama Lengkap *</label>
+                <input type="text" id="buyerName" class="form-control" required placeholder="Contoh: John Doe">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Nomor WhatsApp *</label>
+                <input type="tel" id="buyerPhone" class="form-control" required placeholder="Contoh: 08123456789">
+              </div>
+              <div class="col-12 mb-2">
+                <!--
+                <label class="form-label small fw-bold">Nama Jalan & No. Rumah *</label>
+                <input type="text" rows="2" id="addrJalan" class="form-control" required placeholder="Contoh: Jl. Kapten Damsur Gg. Ikhsan No. 22 RT.02 RW.07"> -->
+                <label class="form-label small fw-bold">Alamat Lengkap (Nama Jalan & No. Rumah / RT-RW)</label>
+              <textarea class="form-control" id="addrJalan" rows="2" placeholder="Contoh: Jl. Kapten Damsur Gg. Ikhsan No. 22 RT.02 RW.07"></textarea>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Desa / Kelurahan *</label>
+                <input type="text" id="addrDesa" class="form-control" required placeholder="Contoh: Kebonbaru">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Kecamatan *</label>
+                <input type="text" id="addrKec" class="form-control" required placeholder="Contoh: Kejaksan">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Kabupaten / Kota *</label>
+                <input type="text" id="addrKab" class="form-control" required placeholder="Contoh: Kota Cirebon">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Provinsi *</label>
+                <input type="text" id="addrProv" class="form-control" required placeholder="Contoh: Jawa Barat">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <div>
+            <div class="small text-muted">Total Tagihan:</div>
+            <div class="h5 text-success fw-bold mb-0" id="cartTotal">Rp0</div>
+          </div>
+          <button type="button" class="btn btn-success px-4" id="btnCheckout" onclick="processCheckout()">
+            <i class="bi bi-whatsapp me-1"></i> Pesan Sekarang
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    let allProducts = [];
+    let cart = [];
+    const TARGET_WA = "6281917061753"; // No WA Pemilik Toko
+
+    document.addEventListener("DOMContentLoaded", function() {
+      fetchData();
+    });
+
+    function fetchData() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(onSuccessData)
+          .withFailureHandler(onFailData)
+          .getStoreData();
+      } else {
+        // Mode Development/Local Fallback
+        onFailData("Lingkungan Google Apps Script tidak terdeteksi");
+      }
+    }
+
+    function onSuccessData(jsonString) {
+      document.getElementById('loading').style.display = 'none';
+      try {
+        const res = JSON.parse(jsonString);
+        allProducts = res.produk || [];
+        
+        if (res.profil) {
+          if (res.profil.nama_toko) document.getElementById('store-title').innerHTML = `<i class="bi bi-shop me-2"></i>${res.profil.nama_toko}`;
+          if (res.profil.motto_slogan) document.getElementById('store-motto').innerText = res.profil.motto_slogan;
+        }
+
+        populateCategories();
+        updateFeatureSections();
+        renderProducts(allProducts);
+        document.getElementById('mainCatalogInfo').innerText = `${allProducts.length} produk`;
+      } catch(e) {
+        onFailData(e.message);
+      }
+    }
+
+    function onFailData(err) {
+      document.getElementById('loading').style.display = 'none';
+      console.warn("Gagal memuat data:", err);
+    }
+
+    function populateCategories() {
+      const cats = [...new Set(allProducts.map(p => p.kategori).filter(Boolean))];
+      const select = document.getElementById('categorySelect');
+      select.innerHTML = '<option value="">Semua</option>';
+      cats.forEach(c => {
+        select.innerHTML += `<option value="${c}">${c}</option>`;
+      });
+    }
+
+    function getPriceData(p) {
+      const hNorm = parseInt(p.harga_normal) || 0;
+      const hProm = parseInt(p.harga_promo) || 0;
+      const hargaFix = hProm > 0 ? hProm : hNorm;
+      return { hNorm, hProm, hargaFix };
+    }
+
+    function productCardHTML(p, showSoldBadge = false) {
+      const { hNorm, hProm, hargaFix } = getPriceData(p);
+      const normHTML = hProm > 0 ? `<span class="price-normal">Rp${hNorm.toLocaleString('id-ID')}</span>` : '';
+      const promoBadge = hProm > 0 ? '<span class="badge-promo">PROMO</span>' : '';
+      const soldBadge = showSoldBadge && (parseInt(p.jumlah_terjual) || 0) > 0
+        ? `<span class="sold-badge"><i class="bi bi-cart-check me-1"></i>${parseInt(p.jumlah_terjual).toLocaleString('id-ID')} terjual</span>`
+        : '';
+
+      return `
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card card-product position-relative">
+            ${promoBadge}
+            ${soldBadge}
+            <img src="${p.link_image || 'https://via.placeholder.com/300?text=Produk'}" class="product-img" alt="${p.nama_produk}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+            <div class="p-3 d-flex flex-column justify-content-between flex-grow-1 product-info">
+              <div>
+                <small class="text-muted d-block product-category">${p.kategori || 'Umum'}</small>
+                <h6 class="fw-bold mb-1 text-dark product-name">${p.nama_produk}</h6>
+                <small class="text-secondary d-block mb-2 product-unit">${p.satuan ? 'Per ' + p.satuan : ''}</small>
+              </div>
+              <div>
+                <div class="mb-2 product-price">
+                  <span class="price-promo">Rp${hargaFix.toLocaleString('id-ID')}</span>
+                  ${normHTML}
+                </div>
+                <button class="btn btn-sm btn-outline-primary w-100 fw-bold" onclick="addToCart('${p.id}')">
+                  <i class="bi bi-cart-plus me-1"></i> + Beli
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProducts(products, showSoldBadge = false) {
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = '';
+
+      if (products.length === 0) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Produk tidak ditemukan.</div>';
+        return;
+      }
+
+      grid.innerHTML = products.map(p => productCardHTML(p, showSoldBadge)).join('');
+    }
+
+    // ================================================================
+    // INFINITE SCROLL UNTUK 3 SECTION FITUR
+    // ================================================================
+    const FEATURE_BATCH_SIZE = 8;
+    const featureState = {
+      promo: { products: [], offset: 0, gridId: 'promoGrid', sectionId: 'promoSection', loaderId: 'promoLoader' },
+      featured: { products: [], offset: 0, gridId: 'featuredGrid', sectionId: 'featuredSection', loaderId: 'featuredLoader' },
+      bestSeller: { products: [], offset: 0, gridId: 'bestSellerGrid', sectionId: 'bestSellerSection', loaderId: 'bestSellerLoader' }
+    };
+
+    let featureObserver = null;
+
+    function appendFeatureBatch(type) {
+      const state = featureState[type];
+      const grid = document.getElementById(state.gridId);
+      const loader = document.getElementById(state.loaderId);
+
+      if (!state.products.length || state.offset >= state.products.length) {
+        if (loader) loader.classList.add('d-none');
+        return false;
+      }
+
+      if (loader) loader.classList.remove('d-none');
+
+      const nextItems = state.products.slice(state.offset, state.offset + FEATURE_BATCH_SIZE);
+      grid.insertAdjacentHTML('beforeend', nextItems.map(p => productCardHTML(p, type === 'bestSeller')).join(''));
+      state.offset += nextItems.length;
+
+      if (state.offset >= state.products.length) {
+        if (loader) loader.classList.add('d-none');
+      }
+
+      return nextItems.length > 0;
+    }
+
+    function resetFeature(type, products, showSoldBadge) {
+      const state = featureState[type];
+      const section = document.getElementById(state.sectionId);
+      const grid = document.getElementById(state.gridId);
+      const loader = document.getElementById(state.loaderId);
+
+      state.products = products || [];
+      state.offset = 0;
+      state.showSoldBadge = showSoldBadge;
+      grid.innerHTML = '';
+
+      if (!state.products.length) {
+        section.classList.add('d-none');
+        if (loader) loader.classList.add('d-none');
+        return;
+      }
+
+      section.classList.remove('d-none');
+      appendFeatureBatch(type);
+    }
+
+    function setupFeatureInfiniteScroll() {
+      if (featureObserver) featureObserver.disconnect();
+
+      featureObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+
+          const type = entry.target.dataset.feature;
+          if (!type || !featureState[type]) return;
+
+          // Tambahkan 8 produk berikutnya ketika sentinel mendekati viewport.
+          appendFeatureBatch(type);
+        });
+      }, {
+        root: null,
+        rootMargin: '500px 0px',
+        threshold: 0
+      });
+
+      ['promo', 'featured', 'bestSeller'].forEach(function(type) {
+        const sentinel = document.getElementById(type === 'promo' ? 'promoSentinel' :
+          type === 'featured' ? 'featuredSentinel' : 'bestSellerSentinel');
+        if (sentinel) {
+          sentinel.dataset.feature = type;
+          featureObserver.observe(sentinel);
+        }
+      });
+    }
+
+    function updateFeatureSections() {
+      const q = document.getElementById('searchInput').value.trim();
+      const cat = document.getElementById('categorySelect').value;
+
+      // Fitur hanya tampil jika pencarian kosong dan kategori = Semua.
+      const isDefaultView = q === '' && cat === '';
+
+      document.getElementById('featureSections').classList.toggle('d-none', !isDefaultView);
+      document.getElementById('featureNav').classList.toggle('d-none', !isDefaultView);
+
+      if (!isDefaultView) {
+        ['promo', 'featured', 'bestSeller'].forEach(function(type) {
+          document.getElementById(featureState[type].sectionId).classList.add('d-none');
+          document.getElementById(featureState[type].loaderId).classList.add('d-none');
+        });
+        return;
+      }
+
+      // Promo Hari Ini = harga_promo terisi dan > 0.
+      const promoProducts = allProducts.filter(function(p) {
+        return (parseInt(p.harga_promo) || 0) > 0;
+      });
+
+      // Produk Unggulan = harga normal ATAU harga promo >= Rp100.000.
+      const featuredProducts = allProducts
+        .filter(function(p) {
+          const hNorm = parseInt(p.harga_normal) || 0;
+          const hProm = parseInt(p.harga_promo) || 0;
+          return hNorm >= 100000 || hProm >= 100000;
+        })
+        .sort(function(a, b) {
+          return Math.max(parseInt(b.harga_normal) || 0, parseInt(b.harga_promo) || 0) -
+                 Math.max(parseInt(a.harga_normal) || 0, parseInt(a.harga_promo) || 0);
+        });
+
+      // Produk Terlaris = urut berdasarkan total qty pada DetailOrder.
+      const bestSellerProducts = allProducts
+        .filter(function(p) { return (parseInt(p.jumlah_terjual) || 0) > 0; })
+        .sort(function(a, b) {
+          return (parseInt(b.jumlah_terjual) || 0) - (parseInt(a.jumlah_terjual) || 0);
+        });
+
+      resetFeature('promo', promoProducts, false);
+      resetFeature('featured', featuredProducts, false);
+      resetFeature('bestSeller', bestSellerProducts, true);
+
+      setupFeatureInfiniteScroll();
+    }
+
+    function filterProducts() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const cat = document.getElementById('categorySelect').value;
+
+      const filtered = allProducts.filter(function(p) {
+        const matchQ = (p.nama_produk || '').toLowerCase().includes(q);
+        const matchC = cat === '' || p.kategori === cat;
+        return matchQ && matchC;
+      });
+
+      const isDefaultView = q === '' && cat === '';
+      updateFeatureSections();
+      renderProducts(filtered);
+
+      document.getElementById('mainCatalogTitle').innerText =
+        isDefaultView ? 'Semua Produk' : 'Hasil Pencarian / Filter';
+
+      document.getElementById('mainCatalogInfo').innerText =
+        isDefaultView ? `${allProducts.length} produk` : `${filtered.length} produk ditemukan`;
+    }
+
+    function addToCart(id) {
+      const prod = allProducts.find(p => p.id === id);
+      if (!prod) return;
+
+      const hNorm = parseInt(prod.harga_normal) || 0;
+      const hProm = parseInt(prod.harga_promo) || 0;
+      const hargaFix = hProm > 0 ? hProm : hNorm;
+
+      const exist = cart.find(c => c.id === id);
+      if (exist) {
+        exist.qty += 1;
+        exist.subtotal = exist.qty * hargaFix;
+      } else {
+        cart.push({
+          id: prod.id,
+          nama: prod.nama_produk,
+          harga: hargaFix,
+          qty: 1,
+          subtotal: hargaFix
+        });
+      }
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Produk ditambahkan ke keranjang.",
+        icon: "success"
+      });
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const count = cart.reduce((acc, c) => acc + c.qty, 0);
+      document.getElementById('cartCount').innerText = count;
+
+      const list = document.getElementById('cartItemsList');
+      list.innerHTML = '';
+      let total = 0;
+
+      if (cart.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-cart-x display-5 d-block mb-2"></i>Keranjang Anda masih kosong</div>';
+      } else {
+        cart.forEach((item, index) => {
+          total += item.subtotal;
+          list.innerHTML += `
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <div>
+                <strong class="d-block">${item.nama}</strong>
+                <small class="text-muted">Rp${item.harga.toLocaleString('id-ID')} x ${item.qty}</small>
+              </div>
+              <div class="d-flex align-items-center">
+                <button class="btn btn-sm btn-light border me-1" onclick="changeQty(${index}, -1)">-</button>
+                <span class="mx-2 fw-bold">${item.qty}</span>
+                <button class="btn btn-sm btn-light border me-2" onclick="changeQty(${index}, 1)">+</button>
+                <span class="fw-bold me-3 text-primary">Rp${item.subtotal.toLocaleString('id-ID')}</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${index})"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          `;
+        });
+      }
+      document.getElementById('cartTotal').innerText = 'Rp' + total.toLocaleString('id-ID');
+    }
+
+    function changeQty(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty <= 0) {
+        cart.splice(index, 1);
+      } else {
+        cart[index].subtotal = cart[index].qty * cart[index].harga;
+      }
+      updateCartUI();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    function processCheckout() {
+      if (cart.length === 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Keranjang Anda masih kosong!",
+        });
+        return;
+      }
+
+      const nama = document.getElementById('buyerName').value.trim();
+      const phone = document.getElementById('buyerPhone').value.trim();
+      const jalan = document.getElementById('addrJalan').value.trim();
+      const desa = document.getElementById('addrDesa').value.trim();
+      const kec = document.getElementById('addrKec').value.trim();
+      const kab = document.getElementById('addrKab').value.trim();
+      const prov = document.getElementById('addrProv').value.trim();
+
+      if (!nama || !phone || !jalan || !desa || !kec || !kab || !prov) {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Mohon lengkapi seluruh formulir data pengiriman!",
+        });
+        return;
+      }
+
+      const btn = document.getElementById('btnCheckout');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
+
+      const alamatLengkap = `${jalan}, Desa/Kel. ${desa}, Kec. ${kec}, ${kab}, Prov. ${prov}`;
+      const totalOrder = cart.reduce((acc, c) => acc + c.subtotal, 0);
+
+      const payload = {
+        nama: nama,
+        no_hp: phone,
+        alamat: alamatLengkap,
+        total: totalOrder,
+        items: cart
+      };
+
+      // Simpan ke Google Sheet lalu buka WA
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(resString) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i> Pesan Sekarang';
+            
+            let res = JSON.parse(resString);
+            sendToWhatsApp(res.orderId || ('ORD-' + Date.now()), nama, phone, alamatLengkap, totalOrder);
+          })
+          .withFailureHandler(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i> Pesan Sekarang';
+            // Tetap buka WA meskipun simpan sheet gagal
+            sendToWhatsApp('ORD-' + Date.now(), nama, phone, alamatLengkap, totalOrder);
+          })
+          .saveOrderToSheet(JSON.stringify(payload));
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i> Pesan Sekarang';
+        sendToWhatsApp('ORD-' + Date.now(), nama, phone, alamatLengkap, totalOrder);
+      }
+    }
+
+    function sendToWhatsApp(orderId, nama, phone, alamatLengkap, totalOrder) {
+      let textWA = `*HALO DAMSUR STORE, SAYA MAU ORDER*\n`;
+      textWA += `-------------------------------------------\n`;
+      textWA += `*ID Order:* ${orderId}\n`;
+      textWA += `*Nama Pemesan:* ${nama}\n`;
+      textWA += `*No. HP:* ${phone}\n`;
+      textWA += `*Alamat Pengiriman:* ${alamatLengkap}\n\n`;
+      textWA += `*DETAIL ITEM PESANAN:*\n`;
+
+      cart.forEach((item, i) => {
+        textWA += `${i+1}. ${item.nama} (${item.qty}x) = Rp${item.subtotal.toLocaleString('id-ID')}\n`;
+      });
+
+      textWA += `-------------------------------------------\n`;
+      textWA += `*TOTAL BAYAR:* *Rp${totalOrder.toLocaleString('id-ID')}*\n\n`;
+      textWA += `Mohon segera diproses ya, terima kasih!`;
+
+      const urlWA = `https://api.whatsapp.com/send?phone=${TARGET_WA}&text=${encodeURIComponent(textWA)}`;
+      
+      cart = [];
+      updateCartUI();
+      
+      // Tutup modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('cartModal'));
+      if(modal) modal.hide();
+
+      window.open(urlWA, '_blank');
+    }
+  </script>
+</body>
+</html>
