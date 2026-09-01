@@ -49,6 +49,46 @@
     .infinite-sentinel { height:1px; width:100%; }
     .load-more-status { font-size:.78rem; color:#6c757d; }
 
+    /* Popup Detail Produk */
+    .product-detail-modal .modal-content {
+      border: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 15px 45px rgba(0,0,0,.20);
+    }
+    .product-detail-modal .modal-header {
+      border-bottom: 0;
+      padding: 16px 18px 0;
+    }
+    .product-detail-modal .modal-body { padding: 10px 22px 22px; }
+    .product-detail-image-wrap {
+      position: relative;
+      background: #f4f6f9;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .product-detail-image {
+      display: block;
+      width: 100%;
+      height: min(55vh, 420px);
+      object-fit: contain;
+    }
+    .product-detail-category {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .product-detail-name { font-weight: 800; line-height: 1.25; margin: 4px 0 8px; }
+    .product-detail-description { color: #5f6368; line-height: 1.6; white-space: pre-line; }
+    .product-detail-price { font-size: 1.35rem; font-weight: 800; color: #dc3545; }
+    .product-detail-normal-price { text-decoration: line-through; color: #888; font-size: .9rem; margin-left: 7px; }
+    .product-detail-add { border-radius: 12px; font-weight: 700; padding: 11px 16px; }
+    .card-product { cursor: pointer; }
+    .card-product .btn { position: relative; z-index: 2; }
+
   </style>
 </head>
 <body>
@@ -127,6 +167,36 @@
   <button class="btn btn-cart-float" data-bs-toggle="modal" data-bs-target="#cartModal">
     <i class="bi bi-cart-fill me-1"></i> Keranjang (<span id="cartCount">0</span>)
   </button>
+
+  <!-- Modal Detail Produk -->
+  <div class="modal fade product-detail-modal" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="productDetailTitle">Detail Produk</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <div class="product-detail-image-wrap">
+            <img id="productDetailImage" class="product-detail-image" src="" alt="">
+          </div>
+          <div class="product-detail-category" id="productDetailCategory">Umum</div>
+          <h4 class="product-detail-name" id="productDetailName"></h4>
+          <div class="mb-3">
+            <span class="product-detail-price" id="productDetailPrice">Rp0</span>
+            <span class="product-detail-normal-price d-none" id="productDetailNormalPrice"></span>
+          </div>
+          <div class="mb-4">
+            <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-1"></i>Deskripsi Produk</h6>
+            <div class="product-detail-description" id="productDetailDescription">Tidak ada deskripsi produk.</div>
+          </div>
+          <button type="button" class="btn btn-primary w-100 product-detail-add" onclick="addFromProductModal()">
+            <i class="bi bi-cart-plus me-1"></i> Tambahkan ke Keranjang
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal Checkout -->
   <div class="modal fade" id="cartModal" tabindex="-1">
@@ -265,7 +335,7 @@
 
       return `
         <div class="col-6 col-md-4 col-lg-3">
-          <div class="card card-product position-relative">
+          <div class="card card-product position-relative" onclick="openProductModal('${encodeURIComponent(String(p.id || ''))}')">
             ${promoBadge}
             ${soldBadge}
             <img src="${p.link_image || 'https://via.placeholder.com/300?text=Produk'}" class="product-img" alt="${p.nama_produk}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
@@ -280,7 +350,7 @@
                   <span class="price-promo">Rp${hargaFix.toLocaleString('id-ID')}</span>
                   ${normHTML}
                 </div>
-                <button class="btn btn-sm btn-outline-primary w-100 fw-bold" onclick="addToCart('${p.id}')">
+                <button class="btn btn-sm btn-outline-primary w-100 fw-bold" onclick="event.stopPropagation(); addToCart('${encodeURIComponent(String(p.id || ''))}')">
                   <i class="bi bi-cart-plus me-1"></i> + Beli
                 </button>
               </div>
@@ -457,8 +527,61 @@
         isDefaultView ? `${allProducts.length} produk` : `${filtered.length} produk ditemukan`;
     }
 
-    function addToCart(id) {
-      const prod = allProducts.find(p => p.id === id);
+    let selectedProductId = null;
+
+    function openProductModal(encodedId) {
+      const id = decodeURIComponent(encodedId || '');
+      const prod = allProducts.find(p => String(p.id) === String(id));
+      if (!prod) return;
+
+      selectedProductId = id;
+
+      const { hNorm, hProm, hargaFix } = getPriceData(prod);
+      const image = document.getElementById('productDetailImage');
+      const normalPrice = document.getElementById('productDetailNormalPrice');
+
+      document.getElementById('productDetailTitle').innerText = prod.nama_produk || 'Detail Produk';
+      document.getElementById('productDetailName').innerText = prod.nama_produk || 'Produk';
+      document.getElementById('productDetailCategory').innerText = prod.kategori || 'Umum';
+      document.getElementById('productDetailPrice').innerText = 'Rp' + hargaFix.toLocaleString('id-ID');
+
+      if (hProm > 0) {
+        normalPrice.innerText = 'Rp' + hNorm.toLocaleString('id-ID');
+        normalPrice.classList.remove('d-none');
+      } else {
+        normalPrice.innerText = '';
+        normalPrice.classList.add('d-none');
+      }
+
+      document.getElementById('productDetailDescription').innerText =
+        prod.deskripsi_produk || 'Tidak ada deskripsi produk.';
+
+      image.src = prod.link_image || 'https://via.placeholder.com/700x500?text=Produk';
+      image.alt = prod.nama_produk || 'Produk';
+      image.onerror = function() {
+        this.onerror = null;
+        this.src = 'https://via.placeholder.com/700x500?text=No+Image';
+      };
+
+      const modalEl = document.getElementById('productDetailModal');
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    function addFromProductModal() {
+      if (!selectedProductId) return;
+
+      addToCart(encodeURIComponent(String(selectedProductId)));
+
+      const modalEl = document.getElementById('productDetailModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      selectedProductId = null;
+    }
+
+    function addToCart(encodedId) {
+      const id = decodeURIComponent(encodedId || '');
+      const prod = allProducts.find(p => String(p.id) === String(id));
       if (!prod) return;
 
       const hNorm = parseInt(prod.harga_normal) || 0;
