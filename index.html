@@ -737,7 +737,7 @@
       });
 
       textWA += `-------------------------------------------\n`;
-      textWA += `*TOTAL BAYAR:* *Rp${totalOrder.toLocaleString('id-ID')}*\n\n`;
+      textWA += `*TOTAL BELANJA:* *Rp${totalOrder.toLocaleString('id-ID')}*\n\n`;
       textWA += `Mohon segera diproses ya, terima kasih!`;
 
       const urlWA = `https://api.whatsapp.com/send?phone=${TARGET_WA}&text=${encodeURIComponent(textWA)}`;
