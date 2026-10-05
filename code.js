@@ -85,53 +85,56 @@ function getStoreData() {
 
   // JIKA SPREADSHEET KOSONG/GAGAL, GUNAKAN DATA DUMMY AGAR TAMPILAN TIDAK INFINITE LOADING
   if (response.produk.length === 0) {
-    response.produk = [
-      {
-        id: "P001",
-        nama_produk: "Beras Premium Super 5kg",
-        satuan: "Karung",
-        deskripsi_produk: "Beras pulen kualita super bebas pemutih",
-        harga_normal: "75000",
-        harga_promo: "68000",
-        kategori: "Sembako",
-        jumlah_terjual: 0,
-        link_image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
-      },
-      {
-        id: "P002",
-        nama_produk: "Minyak Goreng Sawit 2 Litri",
-        satuan: "Pouch",
-        deskripsi_produk: "Minyak goreng kelapa sawit murni jernih",
-        harga_normal: "38000",
-        harga_promo: "34000",
-        kategori: "Sembako",
-        jumlah_terjual: 0,
-        link_image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"
-      },
-      {
-        id: "P003",
-        nama_produk: "Gula Pasir Putih 1kg",
-        satuan: "Kg",
-        deskripsi_produk: "Gula murni manis alami konsumsi harian",
-        harga_normal: "17500",
-        harga_promo: "16000",
-        kategori: "Sembako",
-        jumlah_terjual: 0,
-        link_image: "https://images.unsplash.com/photo-1622484210800-8851b576f9d2?w=400"
-      },
-      {
-        id: "P004",
-        nama_produk: "Kopi Hitam Bubuk 200g",
-        satuan: "Pack",
-        deskripsi_produk: "Kopi olahan khas aroma wangi mantap",
-        harga_normal: "25000",
-        harga_promo: "22000",
-        kategori: "Minuman",
-        jumlah_terjual: 0,
-        link_image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
-      }
-    ];
+    response.produk = [];
+    
+    //  response.produk = [
+    //   {
+    //     id: "P001",
+    //     nama_produk: "Beras Premium Super 5kg",
+    //     satuan: "Karung",
+    //     deskripsi_produk: "Beras pulen kualita super bebas pemutih",
+    //     harga_normal: "75000",
+    //     harga_promo: "68000",
+    //     kategori: "Sembako",
+    //     jumlah_terjual: 0,
+    //     link_image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"
+    //   },
+    //   {
+    //     id: "P002",
+    //     nama_produk: "Minyak Goreng Sawit 2 Litri",
+    //     satuan: "Pouch",
+    //     deskripsi_produk: "Minyak goreng kelapa sawit murni jernih",
+    //     harga_normal: "38000",
+    //     harga_promo: "34000",
+    //     kategori: "Sembako",
+    //     jumlah_terjual: 0,
+    //     link_image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"
+    //   },
+    //   {
+    //     id: "P003",
+    //     nama_produk: "Gula Pasir Putih 1kg",
+    //     satuan: "Kg",
+    //     deskripsi_produk: "Gula murni manis alami konsumsi harian",
+    //     harga_normal: "17500",
+    //     harga_promo: "16000",
+    //     kategori: "Sembako",
+    //     jumlah_terjual: 0,
+    //     link_image: "https://images.unsplash.com/photo-1622484210800-8851b576f9d2?w=400"
+    //   },
+    //   {
+    //     id: "P004",
+    //     nama_produk: "Kopi Hitam Bubuk 200g",
+    //     satuan: "Pack",
+    //     deskripsi_produk: "Kopi olahan khas aroma wangi mantap",
+    //     harga_normal: "25000",
+    //     harga_promo: "22000",
+    //     kategori: "Minuman",
+    //     jumlah_terjual: 0,
+    //     link_image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
+    //   }
+    // ];
   }
+  
 
   if (!response.profil.nama_toko) {
     response.profil = {
